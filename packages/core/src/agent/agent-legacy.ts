@@ -230,6 +230,7 @@ export class AgentLegacyHandler {
           },
           attributes: {
             agentId: this.capabilities.id,
+            agentName: this.capabilities.name,
             instructions: this.capabilities.convertInstructionsToString(instructions),
             availableTools: [
               ...(toolsets ? Object.keys(toolsets) : []),

@@ -1,28 +1,36 @@
 import { convertGenAISpanAttributesToOpenInferenceSpanAttributes } from '@arizeai/openinference-genai';
 import type { Mutable } from '@arizeai/openinference-genai/types';
+import {
+  INPUT_MIME_TYPE,
+  INPUT_VALUE,
+  OUTPUT_MIME_TYPE,
+  OUTPUT_VALUE,
+} from '@arizeai/openinference-semantic-conventions';
 import type { ExportResult } from '@opentelemetry/core';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-proto';
 import type { ReadableSpan } from '@opentelemetry/sdk-trace-base';
-import { convertMastraMessagesToGenAIMessages } from './gen-ai';
+import {
+  ATTR_GEN_AI_INPUT_MESSAGES,
+  ATTR_GEN_AI_OUTPUT_MESSAGES,
+} from '@opentelemetry/semantic-conventions/incubating';
 
 export class OpenInferenceOTLPTraceExporter extends OTLPTraceExporter {
   export(spans: ReadableSpan[], resultCallback: (result: ExportResult) => void) {
     const processedSpans = spans.map(span => {
-      // convert Mastra input messages to GenAI messages if present
-      if (span.attributes?.['gen_ai.prompt'] && typeof span.attributes['gen_ai.prompt'] === 'string') {
-        span.attributes['gen_ai.input.messages'] = convertMastraMessagesToGenAIMessages(
-          span.attributes['gen_ai.prompt'],
-        );
-      }
-      // convert Mastra output messages to GenAI messages if present
-      if (span.attributes?.['gen_ai.completion'] && typeof span.attributes['gen_ai.completion'] === 'string') {
-        span.attributes['gen_ai.output.messages'] = convertMastraMessagesToGenAIMessages(
-          span.attributes['gen_ai.completion'],
-        );
-      }
       const processedAttributes = convertGenAISpanAttributesToOpenInferenceSpanAttributes(span.attributes);
       // only add processed attributes if conversion was successful
       if (processedAttributes) {
+        const inputMessages = span.attributes[ATTR_GEN_AI_INPUT_MESSAGES];
+        if (inputMessages) {
+          processedAttributes[INPUT_MIME_TYPE] = 'application/json';
+          processedAttributes[INPUT_VALUE] = inputMessages;
+        }
+        const outputMessages = span.attributes[ATTR_GEN_AI_OUTPUT_MESSAGES];
+        if (outputMessages) {
+          processedAttributes[OUTPUT_MIME_TYPE] = 'application/json';
+          processedAttributes[OUTPUT_VALUE] = outputMessages;
+        }
+
         (span as Mutable<ReadableSpan>).attributes = processedAttributes;
       }
       return span;
