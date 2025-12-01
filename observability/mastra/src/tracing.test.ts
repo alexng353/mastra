@@ -1557,4 +1557,127 @@ describe('Tracing', () => {
       span.end();
     });
   });
+
+  describe('Bridge trace ID inheritance', () => {
+    it('should inherit trace ID from parent even when bridge returns different trace ID', () => {
+      // Create a mock bridge that returns different trace IDs
+      const mockBridge = {
+        name: 'mock-bridge',
+        createSpan: vi.fn().mockImplementation(() => ({
+          spanId: 'bridge-span-id-123',
+          traceId: 'bridge-trace-id-different', // Different from parent
+          parentSpanId: undefined,
+        })),
+        exportTracingEvent: vi.fn().mockResolvedValue(undefined),
+        shutdown: vi.fn().mockResolvedValue(undefined),
+      };
+
+      const observability = new DefaultObservabilityInstance({
+        serviceName: 'test-service',
+        name: 'test',
+        sampling: { type: SamplingStrategyType.ALWAYS },
+        exporters: [testExporter],
+        bridge: mockBridge,
+      });
+
+      // Create a root span - this will use bridge's trace ID since no parent
+      const rootSpan = observability.startSpan({
+        type: SpanType.AGENT_RUN,
+        name: 'root-agent',
+        attributes: {
+          agentId: 'agent-1',
+        },
+      });
+
+      expect(rootSpan.traceId).toBe('bridge-trace-id-different');
+
+      // Now create a child span - it should inherit parent's trace ID, not bridge's
+      const childSpan = rootSpan.createChildSpan({
+        type: SpanType.MODEL_GENERATION,
+        name: 'child-llm',
+        attributes: {
+          model: 'gpt-4',
+        },
+      });
+
+      // Child span should have same trace ID as parent, even though bridge would return different
+      expect(childSpan.traceId).toBe(rootSpan.traceId);
+      expect(childSpan.traceId).toBe('bridge-trace-id-different');
+
+      // Verify bridge was called for both spans
+      expect(mockBridge.createSpan).toHaveBeenCalledTimes(2);
+
+      childSpan.end();
+      rootSpan.end();
+    });
+
+    it('should maintain trace ID consistency across deep span hierarchies with bridge', () => {
+      // Create a mock bridge that returns unique trace IDs each time
+      let callCount = 0;
+      const mockBridge = {
+        name: 'mock-bridge',
+        createSpan: vi.fn().mockImplementation(() => {
+          callCount++;
+          return {
+            spanId: `bridge-span-${callCount}`,
+            traceId: `bridge-trace-${callCount}`, // Different for each call
+            parentSpanId: undefined,
+          };
+        }),
+        exportTracingEvent: vi.fn().mockResolvedValue(undefined),
+        shutdown: vi.fn().mockResolvedValue(undefined),
+      };
+
+      const observability = new DefaultObservabilityInstance({
+        serviceName: 'test-service',
+        name: 'test',
+        sampling: { type: SamplingStrategyType.ALWAYS },
+        exporters: [testExporter],
+        bridge: mockBridge,
+      });
+
+      // Create root span
+      const rootSpan = observability.startSpan({
+        type: SpanType.AGENT_RUN,
+        name: 'root-agent',
+        attributes: { agentId: 'agent-1' },
+      });
+
+      // Root span gets bridge's first trace ID
+      expect(rootSpan.traceId).toBe('bridge-trace-1');
+
+      // Create child span
+      const childSpan = rootSpan.createChildSpan({
+        type: SpanType.MODEL_GENERATION,
+        name: 'child-llm',
+        attributes: { model: 'gpt-4' },
+      });
+
+      // Child should inherit root's trace ID
+      expect(childSpan.traceId).toBe('bridge-trace-1');
+
+      // Create grandchild span
+      const grandchildSpan = childSpan.createChildSpan({
+        type: SpanType.TOOL_CALL,
+        name: 'grandchild-tool',
+        attributes: { toolId: 'calculator' },
+      });
+
+      // Grandchild should also inherit root's trace ID
+      expect(grandchildSpan.traceId).toBe('bridge-trace-1');
+
+      // All spans should share the same trace ID
+      expect(childSpan.traceId).toBe(rootSpan.traceId);
+      expect(grandchildSpan.traceId).toBe(rootSpan.traceId);
+
+      // But should have different span IDs from bridge
+      expect(rootSpan.id).toBe('bridge-span-1');
+      expect(childSpan.id).toBe('bridge-span-2');
+      expect(grandchildSpan.id).toBe('bridge-span-3');
+
+      grandchildSpan.end();
+      childSpan.end();
+      rootSpan.end();
+    });
+  });
 });

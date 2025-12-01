@@ -22,7 +22,12 @@ export class DefaultSpan<TType extends SpanType> extends BaseSpan<TType> {
       const bridgeIds = bridge.createSpan(options);
       if (bridgeIds) {
         this.id = bridgeIds.spanId;
-        this.traceId = bridgeIds.traceId;
+        // If we have a parent, inherit its traceId for trace consistency.
+        // This ensures child spans always share the same trace as their parent,
+        // even if the bridge would have generated a different traceId.
+        // Fixes trace ID mismatch when parent span was created without bridge
+        // or with a different observability configuration.
+        this.traceId = options.parent ? options.parent.traceId : bridgeIds.traceId;
         this.parentSpanId = bridgeIds.parentSpanId;
         return;
       }
