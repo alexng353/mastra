@@ -1,5 +1,13 @@
 # create-mastra
 
+## 0.18.7-alpha.1
+
+### Patch Changes
+
+- Add timeTravel APIs and add timeTravel feature to studio ([#10757](https://github.com/mastra-ai/mastra/pull/10757))
+
+- Fix discriminatedUnion schema information lost when json schema is converted to zod ([#10764](https://github.com/mastra-ai/mastra/pull/10764))
+
 ## 0.18.7-alpha.0
 
 ## 0.18.6

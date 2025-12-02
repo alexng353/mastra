@@ -1,5 +1,39 @@
 # @mastra/client-js
 
+## 0.17.0-alpha.1
+
+### Minor Changes
+
+- Add support for custom fetch function in MastraClient to enable environments like Tauri that require custom fetch implementations to avoid timeout errors. ([#10679](https://github.com/mastra-ai/mastra/pull/10679))
+
+  You can now pass a custom fetch function when creating a MastraClient:
+
+  ```typescript
+  import { MastraClient } from '@mastra/client-js';
+
+  // Before: Only global fetch was available
+  const client = new MastraClient({
+    baseUrl: 'http://your-api-url',
+  });
+
+  // After: Custom fetch can be passed
+  const client = new MastraClient({
+    baseUrl: 'http://your-api-url',
+    fetch: customFetch, // Your custom fetch implementation
+  });
+  ```
+
+  If no custom fetch is provided, it falls back to the global fetch function, maintaining backward compatibility.
+
+  Fixes #10673
+
+### Patch Changes
+
+- Add timeTravel APIs and add timeTravel feature to studio ([#10757](https://github.com/mastra-ai/mastra/pull/10757))
+
+- Updated dependencies [[`5cc85aa`](https://github.com/mastra-ai/mastra/commit/5cc85aa4329773cac8314f3aa0146227b6b158e4), [`2b62302`](https://github.com/mastra-ai/mastra/commit/2b623027a9d65c1dbc963bf651e9e6a9d09da1fa), [`7d85da4`](https://github.com/mastra-ai/mastra/commit/7d85da42a5fab56009a959a9c20328558d14f4b5), [`e77a5f9`](https://github.com/mastra-ai/mastra/commit/e77a5f9718dc418e29e3c8a389299ed6dc0a6401), [`b069af5`](https://github.com/mastra-ai/mastra/commit/b069af514c4dcfc4fdcb164303569bfff1c26e3d), [`7dc8304`](https://github.com/mastra-ai/mastra/commit/7dc830420296db516b86dcec663e54d0309b8fb8)]:
+  - @mastra/core@0.24.7-alpha.1
+
 ## 0.16.16-alpha.0
 
 ### Patch Changes

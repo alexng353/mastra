@@ -83,7 +83,15 @@
     "@mastra/inngest": "0.18.5"
   },
   "changesets": [
+    "add-custom-fetch-support",
+    "blue-pigs-mix",
+    "bright-tigers-fly",
+    "good-walls-warn",
+    "grumpy-onions-wonder",
     "moody-donkeys-argue",
-    "petite-flies-dream"
+    "petite-flies-dream",
+    "ready-carpets-unite",
+    "slow-ways-live",
+    "tired-comics-tickle"
   ]
 }

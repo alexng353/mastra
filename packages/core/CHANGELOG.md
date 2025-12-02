@@ -1,5 +1,37 @@
 # @mastra/core
 
+## 0.24.7-alpha.1
+
+### Patch Changes
+
+- unexpected json parse issue, log error but dont fail ([#10640](https://github.com/mastra-ai/mastra/pull/10640))
+
+- Add timeTravel APIs and add timeTravel feature to studio ([#10757](https://github.com/mastra-ai/mastra/pull/10757))
+
+- Fix backport ([#10599](https://github.com/mastra-ai/mastra/pull/10599))
+
+- Fix discriminatedUnion schema information lost when json schema is converted to zod ([#10764](https://github.com/mastra-ai/mastra/pull/10764))
+
+- Add restart method to workflow run that allows restarting an active workflow run ([#10703](https://github.com/mastra-ai/mastra/pull/10703))
+  Add status filter to `getWorkflowRuns`
+  Add automatic restart to restart active workflow runs when server starts
+
+- Add timeTravel to workflows. This makes it possible to start a workflow run from a particular step in the workflow ([#10717](https://github.com/mastra-ai/mastra/pull/10717))
+
+  Example code:
+
+  ```ts
+  const result = await run.timeTravel({
+    step: 'step2',
+    inputData: {
+      value: 'input',
+    },
+  });
+  ```
+
+- Updated dependencies [[`e77a5f9`](https://github.com/mastra-ai/mastra/commit/e77a5f9718dc418e29e3c8a389299ed6dc0a6401)]:
+  - @mastra/schema-compat@0.11.9-alpha.0
+
 ## 0.24.7-alpha.0
 
 ### Patch Changes
